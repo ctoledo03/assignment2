@@ -15,12 +15,24 @@ import Product from '../models/products.model.js'
 
 	// Handles the output of data through an api request
 	const list = async (req, res) => { 
-		try {
-			let products = await Product.find().select('name description category price quantity updated created') 
-			res.json(products)
-		} catch (err) {
-			return res.status(400).json( {error: errorHandler.getErrorMessage(err)} )
-		} 
+		const keyword = req.query.name
+		
+		if (keyword) {
+			try {
+				const matchingProducts = await Product.find({ name: { $regex: new RegExp(keyword.toLowerCase(), 'i') } });
+				res.json(matchingProducts);
+			} catch (err) {
+				return res.status(400).json({ error: errorHandler.getErrorMessage(err) })
+			}
+		}
+		else {
+			try {
+				let products = await Product.find().select('name description category price quantity updated created') 
+				res.json(products)
+			} catch (err) {
+				return res.status(400).json( {error: errorHandler.getErrorMessage(err)} )
+			} 
+		}
 	}
 
 
@@ -51,30 +63,38 @@ import Product from '../models/products.model.js'
 		} 
 	}
 
-	const remove = async (req, res) => { 
+	const removeOne = async (req, res) => {
 		try {
-			let product = req.profile
-			let deletedproduct = await product.remove() 
-			res.json(deletedproduct) 
+		  const product = req.profile;
+		  const deletedProduct = await Product.deleteOne({ _id: product._id })
+		  res.json(deletedProduct)
 		} catch (err) {
-			return res.status(400).json( {error: errorHandler.getErrorMessage(err)} )
-		} 
-	}
-
-	const searchByName = async (req, res) => {
-		try {
-			const keyword = req.query.name;
-
-			if (!keyword) {
-				return res.status(400).json({ error: 'Keyword not provided' });
-			}
-			  
-			let products = Product.find({ name: { $regex: new RegExp(keyword, 'i') } })
-			res.json(products)
-
-		} catch (err) {
-			return res.status(400).json( {error: errorHandler.getErrorMessage(err)} )
+		  return res.status(400).json({ error: errorHandler.getErrorMessage(err) })
 		}
 	}
+
+	const removeAllProducts = async (req, res) => {
+		try {
+		  const result = await Product.deleteMany({});
+	  
+		  if (result.deletedCount > 0) {
+			res.json({ message: `Deleted ${result.deletedCount} products` })
+		  } else {
+			res.json({ message: `No products found to delete` });
+		  }
+		} catch (err) {
+		  return res.status(400).json({ error: errorHandler.getErrorMessage(err) })
+		}
+	}
+
+	// const searchByKeyword = async (req, res) => {
+	// 	try {
+	// 	  const keyword = req.query.name.toLowerCase()
+	// 	  const matchingProducts = await Product.find({ name: { $regex: new RegExp(keyword, 'i') } });
+    // 	  res.json(matchingProducts);
+	// 	} catch (err) {
+	// 	  return res.status(400).json({ error: errorHandler.getErrorMessage(err) })
+	// 	}
+	//   }
 	
-	export default { create, productByID, read, list, remove, update, searchByName }
+	export default { create, productByID, read, list, update, removeOne, removeAllProducts }
