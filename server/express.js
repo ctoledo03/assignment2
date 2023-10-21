@@ -26,8 +26,10 @@ import productRoutes from './routes/products.routes.js'
 const app = express()
 //...
 app.get('/', (req, res) => {
-res.status(200).send(Template()) 
+    res.setHeader('Content-Type', 'text/plain');
+    res.end('{"message":"Welcome to the Marketplace Application."}');
 })
+
 //...
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

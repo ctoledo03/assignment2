@@ -28,17 +28,15 @@ import Product from '../models/products.model.js'
 		try {
 			let product = await Product.findById(id) 
 			if (!product)
-				return res.status(400).json( {error: `Product not found`} )
+				return res.status(400).json( {error: "Product not found"} )
 			req.profile = product 
 			next()
 		} catch (err) {
-			return res.status(400).json( {error: `Could not retrieve product`} ) 
+			return res.status(400).json( {error: "Could not retrieve product"} ) 
 		}
 	}
 
 	const read = (req, res) => {
-		req.profile.hashed_password = undefined 
-		req.profile.salt = undefined
 		return res.json(req.profile) 
 	}
 
@@ -47,8 +45,6 @@ import Product from '../models/products.model.js'
 			let product = req.profile
 			product = extend(product, req.body) 
 			product.updated = Date.now() 
-			product.hashed_password = undefined 
-			product.salt = undefined
 			res.json(product) 
 		} catch (err) {
 			return res.status(400).json( {error: errorHandler.getErrorMessage(err)} )
@@ -64,5 +60,21 @@ import Product from '../models/products.model.js'
 			return res.status(400).json( {error: errorHandler.getErrorMessage(err)} )
 		} 
 	}
+
+	const searchByName = async (req, res) => {
+		try {
+			const keyword = req.query.name;
+
+			if (!keyword) {
+				return res.status(400).json({ error: 'Keyword not provided' });
+			}
+			  
+			let products = Product.find({ name: { $regex: new RegExp(keyword, 'i') } })
+			res.json(products)
+
+		} catch (err) {
+			return res.status(400).json( {error: errorHandler.getErrorMessage(err)} )
+		}
+	}
 	
-	export default { create, productByID, read, list, remove, update }
+	export default { create, productByID, read, list, remove, update, searchByName }
